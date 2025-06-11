@@ -213,6 +213,25 @@ map("n", "<leader><tab>]", "<cmd>tabnext<cr>", { desc = "Next Tab" })
 map("n", "<leader><tab>d", "<cmd>tabclose<cr>", { desc = "Close Tab" })
 map("n", "<leader><tab>[", "<cmd>tabprevious<cr>", { desc = "Previous Tab" })
 
+local map = LazyVim.safe_keymap_set
+
+-- 在现有键位映射后面添加以下内容
+
+-- 全选 (Ctrl+a)
+map("n", "<C-a>", "ggVG", { desc = "Select All" })
+
+-- 复制 (Ctrl+c)
+map("n", "<C-c>", '"+yy', { desc = "Copy Line to Clipboard" })
+map("v", "<C-c>", '"+y', { desc = "Copy Selection to Clipboard" })
+
+-- 粘贴 (Ctrl+v)
+map("n", "<C-v>", '"+p', { desc = "Paste from Clipboard" })
+map("i", "<C-v>", '<C-r>+', { desc = "Paste from Clipboard" })
+
+-- 剪切 (Ctrl+x)
+map("n", "<C-x>", '"+dd', { desc = "Cut Line to Clipboard" })
+map("v", "<C-x>", '"+d', { desc = "Cut Selection to Clipboard" })
+
 -- native snippets. only needed on < 0.11, as 0.11 creates these by default
 if vim.fn.has("nvim-0.11") == 0 then
   map("s", "<Tab>", function()
@@ -222,4 +241,3 @@ if vim.fn.has("nvim-0.11") == 0 then
     return vim.snippet.active({ direction = -1 }) and "<cmd>lua vim.snippet.jump(-1)<cr>" or "<S-Tab>"
   end, { expr = true, desc = "Jump Previous" })
 end
-
