@@ -221,16 +221,20 @@ local map = LazyVim.safe_keymap_set
 map("n", "<C-a>", "ggVG", { desc = "Select All" })
 
 -- 复制 (Ctrl+c)
-map("n", "<C-c>", '"+yy', { desc = "Copy Line to Clipboard" })
-map("v", "<C-c>", '"+y', { desc = "Copy Selection to Clipboard" })
+map("n", "<C-c>", 'yy', { desc = "Copy Line to Clipboard" })
+map("v", "<C-c>", 'y', { desc = "Copy Selection to Clipboard" })
 
 -- 粘贴 (Ctrl+v)
-map("n", "<C-v>", '"+p', { desc = "Paste from Clipboard" })
-map("i", "<C-v>", '<C-r>+', { desc = "Paste from Clipboard" })
+map("n", "<C-v>", 'p', { desc = "Paste from Clipboard" })
+map("v", "<C-v>", "p", { desc = "Paste Over Selection" })
+map("i", "<C-v>", "<C-r>+", { desc = "Paste from Clipboard" })
 
 -- 剪切 (Ctrl+x)
 map("n", "<C-x>", '"+dd', { desc = "Cut Line to Clipboard" })
 map("v", "<C-x>", '"+d', { desc = "Cut Selection to Clipboard" })
+
+-- 撤回 (Ctrl+z)
+map("n", "<C-z>", "u", { desc = "Undo" })
 
 -- native snippets. only needed on < 0.11, as 0.11 creates these by default
 if vim.fn.has("nvim-0.11") == 0 then
