@@ -236,6 +236,11 @@ map("v", "<C-x>", '"+d', { desc = "Cut Selection to Clipboard" })
 -- 撤回 (Ctrl+z)
 map("n", "<C-z>", "u", { desc = "Undo" })
 
+local map = vim.keymap.set
+
+-- 保存 (Ctrl+s)
+map({ "n", "i", "v" }, "<C-s>", "<cmd>w<cr>", { desc = "Save File" })
+
 -- native snippets. only needed on < 0.11, as 0.11 creates these by default
 if vim.fn.has("nvim-0.11") == 0 then
   map("s", "<Tab>", function()

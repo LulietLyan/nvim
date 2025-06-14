@@ -10,8 +10,8 @@ return {
             ["c++"] = { "clang_format" },
         },
 
-        formatters = {
-            clang_format = { prepend_args = { "-style=google" } },
-        },
+        -- formatters = {
+        --     clang_format = { prepend_args = { "-style=google" } },
+        -- },
     },
 }
