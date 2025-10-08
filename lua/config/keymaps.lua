@@ -219,6 +219,3 @@ keymap("i", "<C-S-f>", "<C-o><cmd>Telescope live_grep<cr>", { desc = "全局搜�
 -- Ctrl+Shift+N 新建标签页
 keymap("n", "<C-S-n>", "<cmd>tabnew<cr>", { desc = "新建标签页" })
 keymap("i", "<C-S-n>", "<C-o><cmd>tabnew<cr>", { desc = "新建标签页" })
-
--- 打印配置加载信息
-vim.notify("Windows 快捷键配置已加载", vim.log.levels.INFO)
