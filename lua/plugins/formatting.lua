@@ -57,6 +57,23 @@ return {
       format_after_save = {
         lsp_fallback = true,
       },
+      formatters = {
+        ["clang-format"] = {
+          prepend_args = function(_, ctx)
+            local dirname = vim.fs.dirname(ctx.filename)
+            local config = vim.fs.find({ ".clang-format", "_clang-format" }, {
+              path = dirname,
+              upward = true,
+            })
+
+            if #config > 0 then
+              return {}
+            end
+
+            return { "--style=file:" .. vim.fn.stdpath("config") .. "/clang-format-allman.yaml" }
+          end,
+        },
+      },
     },
     init = function()
       -- 如果用户禁用了自动格式化，则禁用 format_on_save
