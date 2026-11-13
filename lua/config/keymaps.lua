@@ -5,6 +5,31 @@ local keymap = vim.keymap.set
 local terminal_buf = nil
 local terminal_win = nil
 
+local function copy_visual_to_ipad()
+  local ok, osc52 = pcall(require, "osc52")
+  if ok then
+    osc52.copy_visual()
+  else
+    vim.cmd('normal! "+y')
+  end
+end
+
+local function copy_line_to_ipad()
+  vim.cmd('normal! "+yy')
+  local ok, osc52 = pcall(require, "osc52")
+  if ok then
+    osc52.copy_register("+")
+  end
+end
+
+local function cut_line_to_ipad()
+  vim.cmd('normal! "+dd')
+  local ok, osc52 = pcall(require, "osc52")
+  if ok then
+    osc52.copy_register("+")
+  end
+end
+
 local function toggle_terminal()
   if terminal_win and vim.api.nvim_win_is_valid(terminal_win) then
     vim.api.nvim_win_close(terminal_win, true)
@@ -26,27 +51,72 @@ local function toggle_terminal()
   vim.cmd("startinsert")
 end
 
-local function send_clipboard_to_terminal()
-  local job_id = vim.b.terminal_job_id
-  if job_id then
-    vim.api.nvim_chan_send(job_id, vim.fn.getreg("+"))
-  end
-end
-
 -- Save / quit
 keymap({ "n", "i", "v" }, "<C-s>", "<cmd>w<cr>", { desc = "保存文件" })
 keymap({ "n", "i" }, "<C-q>", "<cmd>bd<cr>", { desc = "关闭当前文件" })
 keymap("n", "<C-S-q>", "<cmd>qa<cr>", { desc = "退出 Neovim" })
 
 -- Copy / cut / paste / select all
-keymap("v", "<C-c>", '"+y', { desc = "复制到本地剪贴板" })
+keymap("n", "<C-c>", copy_line_to_ipad, { desc = "复制当前行到 iPad 剪贴板" })
+keymap("v", "<C-c>", copy_visual_to_ipad, { desc = "复制到 iPad 剪贴板" })
 keymap("v", "<C-x>", '"+d', { desc = "剪切到本地剪贴板" })
 keymap("n", "<C-v>", '"+p', { desc = "粘贴" })
 keymap("v", "<C-v>", '"+P', { desc = "替换选择并粘贴" })
-keymap("i", "<C-v>", "<C-r>+", { desc = "粘贴" })
-keymap("c", "<C-v>", "<C-r>+", { desc = "粘贴" })
+-- In insert/terminal mode an iPad terminal sends its native paste as input.
+-- Do not intercept <C-v>, otherwise Neovim asks OSC 52 for a clipboard value
+-- that terminal clients cannot provide.
+keymap("c", "<C-v>", "<C-r>+", { desc = "粘贴已复制内容" })
 keymap("n", "<C-a>", "ggVG", { desc = "全选" })
 keymap("i", "<C-a>", "<Esc>ggVG", { desc = "全选" })
+
+-- Two single-key shortcuts that are practical on an iPad keyboard.  They are
+-- deliberately normal-mode mappings so typing text remains unaffected.
+keymap("n", "v", '"+p', { desc = "粘贴系统剪贴板" })
+keymap("v", "v", '"+P', { desc = "替换选择并粘贴系统剪贴板" })
+local function toggle_file_tree()
+  -- LazyVim 目前默认使用 Snacks Explorer；older installs may still use
+  -- Neo-tree, so keep the shortcut compatible with either explorer.
+  if vim.fn.exists(":Neotree") == 2 then
+    vim.cmd("Neotree toggle")
+    return
+  end
+  local ok, snacks = pcall(require, "snacks")
+  if ok and snacks.explorer then
+    snacks.explorer()
+  else
+    require("telescope.builtin").find_files()
+  end
+end
+keymap("n", "b", toggle_file_tree, { desc = "打开/隐藏文件树" })
+
+-- iPad keyboards use Cmd.  Some SSH terminals expose Cmd as Meta, so bind
+-- both forms.  Cmd-V is intentionally left alone in insert mode: the
+-- terminal app must inject its native paste text there.
+local function map_cmd(key, modes, rhs, desc)
+  for _, mode in ipairs(modes) do
+    keymap(mode, "<D-" .. key .. ">", rhs, { desc = desc })
+    keymap(mode, "<M-" .. key .. ">", rhs, { desc = desc .. "（Meta兼容）" })
+  end
+end
+
+map_cmd("c", { "n" }, copy_line_to_ipad, "复制当前行到 iPad 剪贴板")
+map_cmd("c", { "v" }, copy_visual_to_ipad, "复制到 iPad 剪贴板")
+map_cmd("x", { "n" }, cut_line_to_ipad, "剪切当前行到 iPad 剪贴板")
+map_cmd("x", { "v" }, '"+d', "剪切到 iPad 剪贴板")
+map_cmd("v", { "n" }, '"+p', "粘贴")
+map_cmd("v", { "v" }, '"+P', "替换选择并粘贴")
+map_cmd("s", { "n", "i", "v" }, "<cmd>w<cr>", "保存文件")
+map_cmd("a", { "n", "i" }, "ggVG", "全选")
+map_cmd("z", { "n" }, "u", "撤销")
+map_cmd("z", { "i" }, "<C-o>u", "撤销")
+map_cmd("y", { "n" }, "<C-r>", "重做")
+map_cmd("w", { "n", "i" }, "<cmd>bd<cr>", "关闭当前文件")
+map_cmd("n", { "n", "i" }, "<cmd>enew<cr>", "新建文件")
+map_cmd("f", { "n" }, "/", "查找")
+map_cmd("p", { "n" }, "<cmd>Telescope find_files<cr>", "快速打开文件")
+map_cmd("o", { "n" }, "<cmd>Telescope oldfiles<cr>", "最近打开")
+map_cmd("b", { "n" }, toggle_file_tree, "打开文件树")
+map_cmd("j", { "n", "i" }, toggle_terminal, "打开/隐藏终端")
 
 -- Undo / redo
 keymap("n", "<C-z>", "u", { desc = "撤销" })
@@ -55,6 +125,11 @@ keymap("n", "<C-y>", "<C-r>", { desc = "重做" })
 keymap("i", "<C-y>", "<C-o><C-r>", { desc = "重做" })
 keymap("n", "<C-S-z>", "<C-r>", { desc = "重做" })
 keymap("i", "<C-S-z>", "<C-o><C-r>", { desc = "重做" })
+
+-- Buffer actions commonly used in VS Code.  Single purpose mappings avoid
+-- relying on function keys that are often swallowed by iPad terminals.
+keymap({ "n", "i" }, "<C-w>", "<cmd>bd<cr>", { desc = "关闭当前文件" })
+keymap({ "n", "i" }, "<C-n>", "<cmd>enew<cr>", { desc = "新建文件" })
 
 -- Find / command palette / files
 keymap("n", "<C-f>", "/", { desc = "查找" })
@@ -73,7 +148,7 @@ keymap("t", "<C-j>", toggle_terminal, { desc = "隐藏终端" })
 keymap({ "n", "i" }, "<C-`>", toggle_terminal, { desc = "打开/隐藏终端" })
 keymap("t", "<C-`>", toggle_terminal, { desc = "隐藏终端" })
 keymap("t", "<Esc>", "<C-\\><C-n>", { desc = "退出终端输入模式" })
-keymap("t", "<C-v>", send_clipboard_to_terminal, { desc = "粘贴到终端" })
+-- Leave <C-v> available for the iPad terminal's native paste gesture.
 
 -- Selection with Shift + arrows/Home/End, when the terminal can send those keys.
 keymap("n", "<S-Left>", "v<Left>", { desc = "向左选择" })
