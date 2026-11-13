@@ -8,21 +8,8 @@ return {
     event = "VeryLazy",
     config = function()
       require("nvim-surround").setup({
-        -- 配置选项
-        keymaps = {
-          insert = "<C-g>s",
-          insert_line = "<C-g>S",
-          normal = "ys",
-          normal_cur = "yss",
-          normal_line = "yS",
-          normal_cur_line = "ySS",
-          visual = "S",
-          visual_line = "gS",
-          delete = "ds",
-          change = "cs",
-          change_line = "cS",
-        },
-        -- 支持的操作符
+        -- nvim-surround v4 installs its keymaps through <Plug> mappings;
+        -- keymaps are intentionally configured below, outside setup().
         aliases = {
           ["a"] = ">", -- 单字符别名
           ["b"] = ")",
@@ -91,31 +78,11 @@ return {
         },
       })
 
-      -- 设置快捷键
-      vim.keymap.set("n", "<leader>sa", function()
-        require("nvim-surround").surround_add()
-      end, { desc = "添加环绕" })
-
-      vim.keymap.set("n", "<leader>sd", function()
-        require("nvim-surround").surround_delete()
-      end, { desc = "删除环绕" })
-
-      vim.keymap.set("n", "<leader>sc", function()
-        require("nvim-surround").surround_change()
-      end, { desc = "更改环绕" })
-
-      -- 可视模式下的快捷键
-      vim.keymap.set("v", "<leader>sa", function()
-        require("nvim-surround").surround_add()
-      end, { desc = "添加环绕" })
-
-      vim.keymap.set("v", "<leader>sd", function()
-        require("nvim-surround").surround_delete()
-      end, { desc = "删除环绕" })
-
-      vim.keymap.set("v", "<leader>sc", function()
-        require("nvim-surround").surround_change()
-      end, { desc = "更改环绕" })
+      -- v4 exposes stable <Plug> mappings instead of setup().keymaps.
+      vim.keymap.set("n", "<leader>sa", "<Plug>(nvim-surround-normal)", { remap = true, desc = "添加环绕" })
+      vim.keymap.set("n", "<leader>sd", "<Plug>(nvim-surround-delete)", { remap = true, desc = "删除环绕" })
+      vim.keymap.set("n", "<leader>sc", "<Plug>(nvim-surround-change)", { remap = true, desc = "更改环绕" })
+      vim.keymap.set("x", "<leader>sa", "<Plug>(nvim-surround-visual)", { remap = true, desc = "添加环绕" })
     end,
   },
 }
